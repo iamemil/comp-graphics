@@ -21,8 +21,5 @@
     <ClCompile Include="..\..\..\..\Downloads\glew-2.1.0\glew-2.1.0\src\glew.c">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="main_new.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
 </Project>
