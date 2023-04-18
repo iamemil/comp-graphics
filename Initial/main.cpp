@@ -2,18 +2,20 @@
 #include <GLFW/glfw3.h>
 #include <stdio.h>
 
-#define WIDTH 640
+#define WIDTH 1280
 #define HEIGHT 640
 
 
-GLuint VBO[2];
-GLuint VAO[2];
+GLuint VBO[3];
+GLuint VAO[3];
 
-GLfloat points[12] = { -0.75f, 0.0f, 0.0f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.0f, -0.5f, 0.8f, 0.0f };
+GLfloat points[21] = { -0.75f, 0.0f, 0.0f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.0f, -0.5f, 0.8f, 0.0f,-0.75f, 0.0f, 0.0f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.0f };
 
 GLint dragged = -1;
 
 GLfloat HermiteCurve[300];
+
+GLfloat HermiteCurve2[300];
 
 GLfloat t;
 GLint i;
@@ -33,7 +35,7 @@ GLint getActivePoint(GLfloat* p, GLfloat sensitivity, GLfloat x, GLfloat y) {
     GLfloat		xNorm = -1 + x / (WIDTH / 2);
     GLfloat		yNorm = -1 + (HEIGHT - y) / (HEIGHT / 2);
 
-    for (GLint i = 0; i < 4; i++)
+    for (GLint i = 0; i < 7; i++)
         if (dist2_2d(p[i * 3], p[i * 3 + 1], xNorm, yNorm) < s)
             return i;
 
@@ -66,11 +68,29 @@ void cursorPosCallback(GLFWwindow* window, double x, double y) {
         HermiteCurve[298] = points[10];
         HermiteCurve[299] = 0.0f;
 
+        HermiteCurve2[0] = points[9];
+        HermiteCurve2[1] = points[10];
+        HermiteCurve2[2] = 0.0f;
+
+        for (i = 1; i < 100; i++) {
+            t = -1 + i * step;
+            HermiteCurve2[i * 3] = points[9] * (-1.0f / 6.0f * t * t * t + 1.0f / 2.0f * t * t - 1.0f / 3.0f * t) + points[12] * (1.0f / 2.0f * t * t * t - t * t - 1.0f / 2.0f * t + 1) + points[15] * (-1.0f / 2.0f * t * t * t + 1.0f / 2.0f * t * t + t) + points[18] * (1.0f / 6.0f * t * t * t - 1.0f / 6.0f * t);
+            HermiteCurve2[i * 3 + 1] = points[10] * (-1.0f / 6.0f * t * t * t + 1.0f / 2.0f * t * t - 1.0f / 3.0f * t) + points[13] * (1.0f / 2.0f * t * t * t - t * t - 1.0f / 2.0f * t + 1) + points[16] * (-1.0f / 2.0f * t * t * t + 1.0f / 2.0f * t * t + t) + points[19] * (1.0f / 6.0f * t * t * t - 1.0f / 6.0f * t);
+            HermiteCurve2[i * 3 + 2] = 0.0f;
+        }
+
+        HermiteCurve2[297] = points[18];
+        HermiteCurve2[298] = points[19];
+        HermiteCurve2[299] = 0.0f;
+
         glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
         glBufferData(GL_ARRAY_BUFFER, 300 * sizeof(GLfloat), HermiteCurve, GL_STATIC_DRAW);
 
         glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
-        glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(GLfloat), points, GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, 300 * sizeof(GLfloat), HermiteCurve2, GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
+        glBufferData(GL_ARRAY_BUFFER, 21 * sizeof(GLfloat), points, GL_STATIC_DRAW);
 
 
 
@@ -152,23 +172,47 @@ int main() {
     HermiteCurve[298] = points[10];
     HermiteCurve[299] = 0.0f;
 
-    glGenBuffers(2, VBO);
+    HermiteCurve2[0] = points[9];
+    HermiteCurve2[1] = points[10];
+    HermiteCurve2[2] = 0.0f;
+
+    for (i = 1; i < 100; i++) {
+        t = -1 + i * step;
+        HermiteCurve2[i * 3] = points[9] * (-1.0f / 6.0f * t * t * t + 1.0f / 2.0f * t * t - 1.0f / 3.0f * t) + points[12] * (1.0f / 2.0f * t * t * t - t * t - 1.0f / 2.0f * t + 1) + points[15] * (-1.0f / 2.0f * t * t * t + 1.0f / 2.0f * t * t + t) + points[18] * (1.0f / 6.0f * t * t * t - 1.0f / 6.0f * t);
+        HermiteCurve2[i * 3 + 1] = points[10] * (-1.0f / 6.0f * t * t * t + 1.0f / 2.0f * t * t - 1.0f / 3.0f * t) + points[13] * (1.0f / 2.0f * t * t * t - t * t - 1.0f / 2.0f * t + 1) + points[16] * (-1.0f / 2.0f * t * t * t + 1.0f / 2.0f * t * t + t) + points[19] * (1.0f / 6.0f * t * t * t - 1.0f / 6.0f * t);
+        HermiteCurve2[i * 3 + 2] = 0.0f;
+    }
+
+    HermiteCurve2[297] = points[18];
+    HermiteCurve2[298] = points[19];
+    HermiteCurve2[299] = 0.0f;
+
+    glGenBuffers(3, VBO);
     glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
     glBufferData(GL_ARRAY_BUFFER, 300 * sizeof(GLfloat), HermiteCurve, GL_STATIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
-    glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(GLfloat), points, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 300 * sizeof(GLfloat), HermiteCurve, GL_STATIC_DRAW);
 
-    glGenVertexArrays(2, VAO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
+    glBufferData(GL_ARRAY_BUFFER, 21 * sizeof(GLfloat), points, GL_STATIC_DRAW);
+
+    glGenVertexArrays(3, VAO);
     
     glBindVertexArray(VAO[0]);
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
+
     glBindVertexArray(VAO[1]);
     glEnableVertexAttribArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+    glBindVertexArray(VAO[2]);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[2]);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
     vert_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -197,7 +241,10 @@ int main() {
         glDrawArrays(GL_LINE_STRIP, 0, 100);
 
         glBindVertexArray(VAO[1]);
-        glDrawArrays(GL_POINTS, 0, 4);
+        glDrawArrays(GL_LINE_STRIP, 0, 100);
+
+        glBindVertexArray(VAO[2]);
+        glDrawArrays(GL_POINTS, 0, 7);
 
         glfwPollEvents();
         glfwSwapBuffers(window);
