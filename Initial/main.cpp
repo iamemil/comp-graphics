@@ -5,11 +5,20 @@
 #define WIDTH 640
 #define HEIGHT 640
 
-GLuint vao, vbo;
+
+GLuint VBO[2];
+GLuint VAO[2];
 
 GLfloat points[12] = { -0.75f, 0.0f, 0.0f, -0.5f, 0.0f, 0.0f, 0.5f, 0.0f, 0.0f, -0.5f, 0.8f, 0.0f };
 
 GLint dragged = -1;
+
+GLfloat HermiteCurve[300];
+
+GLfloat t;
+GLint i;
+
+GLfloat step = 3.0f / 99.0f; // t \in [-1,2]
 
 GLfloat dist2_2d(GLfloat P1x, GLfloat P1y, GLfloat P2x, GLfloat P2y) {
 
@@ -41,9 +50,30 @@ void cursorPosCallback(GLFWwindow* window, double x, double y) {
         points[3 * dragged] = xNorm;  // x coord
         points[3 * dragged + 1] = yNorm;  // y coord
 
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+        HermiteCurve[0] = points[0];
+        HermiteCurve[1] = points[1];
+        HermiteCurve[2] = 0.0f;
+
+        for (i = 1; i < 100; i++) {
+            t = -1 + i * step;
+            HermiteCurve[i * 3] = points[0] * (-1.0f / 6.0f * t * t * t + 1.0f / 2.0f * t * t - 1.0f / 3.0f * t) + points[3] * (1.0f / 2.0f * t * t * t - t * t - 1.0f / 2.0f * t + 1) + points[6] * (-1.0f / 2.0f * t * t * t + 1.0f / 2.0f * t * t + t) + points[9] * (1.0f / 6.0f * t * t * t - 1.0f / 6.0f * t);
+            HermiteCurve[i * 3 + 1] = points[1] * (-1.0f / 6.0f * t * t * t + 1.0f / 2.0f * t * t - 1.0f / 3.0f * t) + points[4] * (1.0f / 2.0f * t * t * t - t * t - 1.0f / 2.0f * t + 1) + points[7] * (-1.0f / 2.0f * t * t * t + 1.0f / 2.0f * t * t + t) + points[10] * (1.0f / 6.0f * t * t * t - 1.0f / 6.0f * t);
+            HermiteCurve[i * 3 + 2] = 0.0f;
+        }
+
+        HermiteCurve[297] = points[9];
+        HermiteCurve[298] = points[10];
+        HermiteCurve[299] = 0.0f;
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+        glBufferData(GL_ARRAY_BUFFER, 300 * sizeof(GLfloat), HermiteCurve, GL_STATIC_DRAW);
+
+        glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
         glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(GLfloat), points, GL_STATIC_DRAW);
-        glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+
+
     }
 }
 
@@ -89,8 +119,6 @@ int main() {
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     window = glfwCreateWindow(WIDTH, HEIGHT, "Drag&Drop", NULL, NULL);
     if (!window) {
@@ -106,15 +134,41 @@ int main() {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
 
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    ////// GENERATING THE POINTS OF THE HERMITE CURVE ///////
+
+    HermiteCurve[0] = points[0];
+    HermiteCurve[1] = points[1];
+    HermiteCurve[2] = 0.0f;
+
+    for (i = 1; i < 100; i++) {
+        t = -1 + i * step;
+        HermiteCurve[i * 3] = points[0] * (-1.0f / 6.0f * t * t * t + 1.0f / 2.0f * t * t - 1.0f / 3.0f * t) + points[3] * (1.0f / 2.0f * t * t * t - t * t - 1.0f / 2.0f * t + 1) + points[6] * (-1.0f / 2.0f * t * t * t + 1.0f / 2.0f * t * t + t) + points[9] * (1.0f / 6.0f * t * t * t - 1.0f / 6.0f * t);
+        HermiteCurve[i * 3 + 1] = points[1] * (-1.0f / 6.0f * t * t * t + 1.0f / 2.0f * t * t - 1.0f / 3.0f * t) + points[4] * (1.0f / 2.0f * t * t * t - t * t - 1.0f / 2.0f * t + 1) + points[7] * (-1.0f / 2.0f * t * t * t + 1.0f / 2.0f * t * t + t) + points[10] * (1.0f / 6.0f * t * t * t - 1.0f / 6.0f * t);
+        HermiteCurve[i * 3 + 2] = 0.0f;
+    }
+
+    HermiteCurve[297] = points[9];
+    HermiteCurve[298] = points[10];
+    HermiteCurve[299] = 0.0f;
+
+    glGenBuffers(2, VBO);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+    glBufferData(GL_ARRAY_BUFFER, 300 * sizeof(GLfloat), HermiteCurve, GL_STATIC_DRAW);
+
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
     glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(GLfloat), points, GL_STATIC_DRAW);
 
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-
+    glGenVertexArrays(2, VAO);
+    
+    glBindVertexArray(VAO[0]);
     glEnableVertexAttribArray(0);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
+
+    glBindVertexArray(VAO[1]);
+    glEnableVertexAttribArray(0);
+    glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, NULL);
 
     vert_shader = glCreateShader(GL_VERTEX_SHADER);
@@ -139,9 +193,11 @@ int main() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         glUseProgram(shader_programme);
-        glBindVertexArray(vao);
-        glDrawArrays(GL_LINES, 0, 4);
-        glBindVertexArray(0);
+        glBindVertexArray(VAO[0]);
+        glDrawArrays(GL_LINE_STRIP, 0, 100);
+
+        glBindVertexArray(VAO[1]);
+        glDrawArrays(GL_POINTS, 0, 4);
 
         glfwPollEvents();
         glfwSwapBuffers(window);
